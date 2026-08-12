@@ -15,6 +15,8 @@ class AnalyzeRequest(BaseModel):
     max_level: int = 3
     network_type: str = "drive"
     road_buffer_m: float = 10.0
+    raster: str = None
+    edges: str = None
 
 @router.post("/analyze")
 def analyze(payload: AnalyzeRequest):
