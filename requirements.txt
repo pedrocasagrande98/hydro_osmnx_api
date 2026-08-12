@@ -8,3 +8,5 @@ geopandas
 duckdb
 osmnx
 shapely
+pyarrow
+tqdm

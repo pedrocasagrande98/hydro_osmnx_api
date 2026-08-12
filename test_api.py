@@ -5,7 +5,7 @@ import os
 import sys
 
 # Configuração
-HOST = "http://187.77.61.11:8000"
+HOST = "http://187.77.61.11"
 
 print(f"Iniciando testes na API: {HOST}\n")
 
