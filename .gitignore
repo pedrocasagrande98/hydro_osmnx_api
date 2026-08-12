@@ -11,9 +11,9 @@ venv/
 ENV/
 
 # Data and Outputs (Ignorar arquivos pesados)
-data/
 outputs/
 *.parquet
+!*.parquet.part*
 *.geojson
 
 # OS generated files
