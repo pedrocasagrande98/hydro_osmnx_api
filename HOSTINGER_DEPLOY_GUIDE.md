@@ -41,3 +41,19 @@ Isso garante que o arquivo seja salvo diretamente no host da VPS em `~/hydro_osm
 2. **Fila**: A API retorna um `task_id` imediatamente e empurra o GeoJSON pro Redis.
 3. **Worker**: O Celery pega a task, recorta o GeoParquet gigante usando o GeoJSON recebido, cruza com vias do OpenStreetMap (OSMnx) e gera um ZIP em `data/outputs/{task_id}/resultados.zip`.
 4. **Polling/Download**: O usuário continua consultando `GET /api/v1/tasks/{task_id}` até dar `completed`, momento em que acessa `GET /api/v1/download/{task_id}` para baixar o ZIP final. O arquivo gerado permanece armazenado na VPS.
+
+## 5. Segurança e Vulnerabilidades (Para Produção Aberta)
+
+A aplicação no estado atual tem uma excelente blindagem interna graças ao Docker, mas requer reforços nas "portas de entrada" caso seja aberta ao público (ex: postagem no LinkedIn).
+
+### Como o sistema se comporta sob ataque?
+- **Invasão Direta (Hacking)**: **Muito Difícil**. A aplicação roda isolada dentro de contêineres Docker (não há privilégios `root` sobre o servidor Hostinger). A porta do Redis (`6379`) está corretamente fechada para o exterior, impedindo sequestro da fila. Se invadirem, ficarão presos na caixa da API e no máximo acessarão os zips gerados.
+- **Sabotagem / Abuso de Recursos (DDoS)**: **Altamente Vulnerável**. A rota `/api/v1/analyze` é pública. Um invasor pode fazer 10.000 requisições simultâneas ou enviar polígonos imensos. Isso encherá a fila do Celery, forçará 100% da CPU e Memória RAM da VPS e derrubará o sistema por *Out Of Memory (OOM)*.
+
+### O que fazer antes de abrir a API para o mundo?
+Para blindar a API para uso corporativo ou público agressivo, as seguintes medidas são **obrigatórias**:
+
+1. **Rate Limiting (Limitação de Requisições)**: Configurar no Nginx ou no FastAPI um limite estrito (ex: 1 chamada por IP por minuto).
+2. **API Keys / Autenticação**: Trancar as rotas da API com tokens JWT ou Headers (`Authorization: Bearer`). Apenas o seu frontend certificado deve ter permissão para disparar o gatilho da análise.
+3. **Cadeado SSL (HTTPS)**: Reativar e configurar o certbot. O tráfego na porta `80` atual (HTTP) trafega dados de forma aberta, permitindo "farejamento" do GeoJSON em redes públicas.
+4. **Validação de Tamanho de Área (Sanitization)**: Inserir um cálculo rápido de "quilômetros quadrados" na API. Se o polígono exceder um limite máximo, retornar `400 Bad Request: Área muito extensa` antes de enviar pro Celery. Isso protege a memória RAM da VPS.
