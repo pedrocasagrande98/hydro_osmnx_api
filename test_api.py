@@ -26,11 +26,18 @@ except Exception as e:
 
 # 2. Teste de Disparo de Análise (Inicia a Task no Celery)
 print("\n2. Disparando Job de Analise (Celery)...")
+
+# Carregar o GeoJSON real (cabre.geojson)
+try:
+    with open("cabre.geojson", "r", encoding="utf-8") as f:
+        cabre_geojson = json.load(f)
+except Exception as e:
+    print(f"[X] Erro ao ler cabre.geojson: {e}")
+    sys.exit(1)
+
 payload = {
-    "aoi_geojson": {
-        "type": "FeatureCollection",
-        "features": [] 
-    },
+    "aoi_geojson": cabre_geojson,
+    "raster": "data/saida_rasterio.parquet",
     "min_level": 1,
     "max_level": 3,
     "network_type": "drive",

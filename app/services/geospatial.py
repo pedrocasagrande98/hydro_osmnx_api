@@ -45,11 +45,20 @@ def run_hydro_pipeline(payload: Dict[str, Any]) -> Dict[str, Any]:
     utm_epsg = payload.get("utm_epsg", UTM_SA_ALBERS)
     offline = payload.get("offline", False)
     
+    aoi_geojson = payload.get("aoi_geojson", None)
+    
     # OUTPUT_DIR ajustado para usar /app/data/outputs no container
     output_dir = os.path.join("data", "outputs", payload.get("job_id", "default"))
     os.makedirs(output_dir, exist_ok=True)
 
     print(f"Iniciando pipeline para job {payload.get('job_id', 'default')}")
+    
+    # Se recebemos o GeoJSON diretamente no payload, salvamos ele num arquivo
+    if aoi_geojson:
+        import json
+        aoi_file = os.path.join(output_dir, "input_aoi.geojson")
+        with open(aoi_file, "w", encoding="utf-8") as f:
+            json.dump(aoi_geojson, f)
 
     # 1. AOI
     aoi_path = os.path.join(output_dir, "aoi.geojson")
